@@ -8,7 +8,7 @@ import dpath.options
 from funcy import get_in, last
 
 from dvc.repo.plots import _normpath, infer_data_sources
-from dvc.utils.plots import get_plot_id
+from dvc.utils.plots import group_definitions_by_id
 
 from .convert import _get_converter
 
@@ -36,14 +36,9 @@ class PlotsData:
     def group_definitions(self):
         groups = defaultdict(list)
         for rev, rev_content in self.data.items():
-            for config_file, config_file_content in (
-                rev_content.get("definitions", {}).get("data", {}).items()
-            ):
-                for plot_id, plot_definition in config_file_content.get(
-                    "data", {}
-                ).items():
-                    full_id = get_plot_id(plot_id, config_file)
-                    groups[full_id].append((rev, plot_id, plot_definition))
+            definitions = rev_content.get("definitions", {}).get("data", {})
+            for plot_id, definition in group_definitions_by_id(definitions).items():
+                groups[plot_id].append((rev, *definition))
         return dict(groups)
 
     def get_definition_data(self, target_files, rev):
